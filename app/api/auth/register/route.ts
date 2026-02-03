@@ -1,4 +1,4 @@
-import { db } from "@/src/db";
+﻿import { db } from "@/src/db";
 import { korisnik } from "@/src/db/schema";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
@@ -8,6 +8,13 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { email, sifra, ime, tezina, visina, ciljnaTezina } = body;
+
+    if (!email || !sifra || !ime) {
+      return NextResponse.json(
+        { error: "Email, lozinka i ime su obavezni" },
+        { status: 400 },
+      );
+    }
 
     // 1. Provera da li email postoji
     const postoji = await db

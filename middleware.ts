@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 
 export function middleware(req: NextRequest) {
@@ -8,7 +8,11 @@ export function middleware(req: NextRequest) {
     return NextResponse.json({ error: "Niste ulogovani" }, { status: 401 });
   }
 
-  const token = auth.split(" ")[1];
+  const parts = auth.split(" ");
+  const token = parts[0] === "Bearer" && parts.length === 2 ? parts[1] : null;
+  if (!token) {
+    return NextResponse.json({ error: "Nevažeći token" }, { status: 401 });
+  }
 
   try {
     jwt.verify(token, process.env.JWT_SECRET!);

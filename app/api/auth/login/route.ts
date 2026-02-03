@@ -1,4 +1,4 @@
-import { db } from "@/src/db";
+﻿import { db } from "@/src/db";
 import { korisnik } from "@/src/db/schema";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
@@ -6,7 +6,20 @@ import jwt from "jsonwebtoken";
 import { eq } from "drizzle-orm";
 
 export async function POST(req: Request) {
-  const { email, sifra } = await req.json();
+  let body: any;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Neispravan JSON" }, { status: 400 });
+  }
+
+  const { email, sifra } = body ?? {};
+  if (!email || !sifra) {
+    return NextResponse.json(
+      { error: "Email i lozinka su obavezni" },
+      { status: 400 },
+    );
+  }
 
   const result = await db
     .select()

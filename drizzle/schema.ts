@@ -1,47 +1,86 @@
-import { mysqlTable, mysqlSchema, AnyMySqlColumn, varchar, decimal, foreignKey, date } from "drizzle-orm/mysql-core"
-import { sql } from "drizzle-orm"
+import {
+  mysqlTable,
+  varchar,
+  decimal,
+  date,
+  bigint,
+  tinyint,
+} from "drizzle-orm/mysql-core";
 
+/* ===================== AKTIVNOST ===================== */
 export const aktivnost = mysqlTable("aktivnost", {
-	aktivnostId: bigint({ mode: "number" }).autoincrement().notNull(),
-	nazivAktivnosti: varchar({ length: 50 }).default('NULL'),
-	prosekKalorija: decimal({ precision: 10, scale: 2 }).default('NULL'),
+  aktivnostId: bigint("aktivnostId", { mode: "bigint" })
+    .autoincrement()
+    .primaryKey(),
+
+  nazivAktivnosti: varchar("nazivAktivnosti", { length: 50 }),
+  prosekKalorija: decimal("prosekKalorija", { precision: 10, scale: 2 }),
 });
 
+/* ===================== HRANA ===================== */
 export const hrana = mysqlTable("hrana", {
-	hranaId: bigint({ mode: "number" }).notNull(),
-	nazivHrane: varchar({ length: 50 }).default('NULL'),
-	kalorije: decimal({ precision: 10, scale: 2 }).default('NULL'),
-	proteini: decimal({ precision: 10, scale: 2 }).default('NULL'),
-	masti: decimal({ precision: 10, scale: 2 }).default('NULL'),
-	ugljeniHidrati: decimal({ precision: 10, scale: 2 }).default('NULL'),
-	prihvacena: tinyint().default('NULL'),
+  hranaId: bigint("hranaId", { mode: "bigint" }).primaryKey(),
+
+  nazivHrane: varchar("nazivHrane", { length: 50 }),
+  kalorije: decimal("kalorije", { precision: 10, scale: 2 }),
+  proteini: decimal("proteini", { precision: 10, scale: 2 }),
+  masti: decimal("masti", { precision: 10, scale: 2 }),
+  ugljeniHidrati: decimal("ugljeniHidrati", { precision: 10, scale: 2 }),
+  prihvacena: tinyint("prihvacena"),
 });
 
-export const konzumiranahrana = mysqlTable("konzumiranahrana", {
-	khId: bigint("KHId", { mode: "number" }).notNull(),
-	korisnik: bigint({ mode: "number" }).default('NULL').references(() => korisnik.korisnikId, { onDelete: "restrict", onUpdate: "restrict" } ),
-	hrana: bigint({ mode: "number" }).default('NULL').references(() => hrana.hranaId, { onDelete: "restrict", onUpdate: "restrict" } ),
-	// you can use { mode: 'date' }, if you want to have Date as type for this column
-	datumKh: date({ mode: 'string' }).default('NULL'),
-});
-
+/* ===================== KORISNIK ===================== */
 export const korisnik = mysqlTable("korisnik", {
-	korisnikId: bigint({ mode: "number" }).autoincrement().notNull(),
-	email: varchar({ length: 50 }).default('NULL'),
-	sifra: varchar({ length: 20 }).default('NULL'),
-	uloga: varchar({ length: 40 }).default('NULL'),
-	tezina: decimal({ precision: 10, scale: 2 }).default('NULL'),
-	visina: decimal({ precision: 10, scale: 2 }).default('NULL'),
-	ime: varchar({ length: 50 }).default('NULL'),
-	ciljnaTezina: decimal({ precision: 10, scale: 2 }).default('NULL'),
+  korisnikId: bigint("korisnikId", { mode: "bigint" })
+    .autoincrement()
+    .primaryKey(),
+
+  email: varchar("email", { length: 50 }),
+  sifra: varchar("sifra", { length: 255 }), // bcrypt hash treba više od 20!
+  uloga: varchar("uloga", { length: 40 }),
+  ime: varchar("ime", { length: 50 }),
+
+  tezina: decimal("tezina", { precision: 10, scale: 2 }),
+  visina: decimal("visina", { precision: 10, scale: 2 }),
+  ciljnaTezina: decimal("ciljnaTezina", { precision: 10, scale: 2 }),
 });
 
+/* ===================== KONZUMIRANA HRANA ===================== */
+export const konzumiranahrana = mysqlTable("konzumiranahrana", {
+  khId: bigint("khId", { mode: "bigint" }).autoincrement().primaryKey(),
+
+  korisnikId: bigint("korisnik", { mode: "bigint" }).references(
+    () => korisnik.korisnikId,
+    { onDelete: "restrict", onUpdate: "restrict" },
+  ),
+
+  hranaId: bigint("hrana", { mode: "bigint" }).references(() => hrana.hranaId, {
+    onDelete: "restrict",
+    onUpdate: "restrict",
+  }),
+
+  datumKh: date("datumKh", { mode: "string" }),
+});
+
+/* ===================== ODRADJENE AKTIVNOSTI ===================== */
 export const odradjeneaktivnosti = mysqlTable("odradjeneaktivnosti", {
-	oaId: bigint("OAId", { mode: "number" }).autoincrement().notNull(),
-	korisnik: bigint({ mode: "number" }).default('NULL').references(() => korisnik.korisnikId, { onDelete: "restrict", onUpdate: "restrict" } ),
-	aktivnost: bigint({ mode: "number" }).default('NULL').references(() => aktivnost.aktivnostId, { onDelete: "restrict", onUpdate: "restrict" } ),
-	trajanjeMin: decimal().default('NULL'),
-	potroseneKalorije: decimal().default('NULL'),
-	// you can use { mode: 'date' }, if you want to have Date as type for this column
-	datumOa: date({ mode: 'string' }).default('NULL'),
+  oaId: bigint("oaId", { mode: "bigint" }).autoincrement().primaryKey(),
+
+  korisnikId: bigint("korisnik", { mode: "bigint" }).references(
+    () => korisnik.korisnikId,
+    { onDelete: "restrict", onUpdate: "restrict" },
+  ),
+
+  aktivnostId: bigint("aktivnost", { mode: "bigint" }).references(
+    () => aktivnost.aktivnostId,
+    { onDelete: "restrict", onUpdate: "restrict" },
+  ),
+
+  trajanjeMin: decimal("trajanjeMin", { precision: 10, scale: 2 }),
+  potroseneKalorije: decimal("potroseneKalorije", {
+    precision: 10,
+    scale: 2,
+  }),
+
+  datumOa: date("datumOa", { mode: "string" }),
 });

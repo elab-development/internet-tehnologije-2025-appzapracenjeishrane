@@ -1,0 +1,16 @@
+export default function Home() {
+  return (
+    <main
+      className="min-h-screen bg-cover bg-center flex items-center justify-center"
+      style={{ backgroundImage: "url('/images/background.jpg')" }}
+    >
+      <div className="bg-white/90 backdrop-blur-md p-8 rounded-lg shadow-md">
+        <h1 className="text-2xl font-bold text-gray-800">Dobrodošao 👋</h1>
+
+        <p className="mt-2 text-gray-600">
+          Ovo je početna stranica aplikacije.
+        </p>
+      </div>
+    </main>
+  );
+}

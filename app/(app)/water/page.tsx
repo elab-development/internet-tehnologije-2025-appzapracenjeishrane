@@ -4,14 +4,19 @@ import { useState } from "react";
 import Link from "next/link";
 
 export default function WaterPage() {
-  const DAILY_GOAL = 2000; // ml
+  const DAILY_GOAL = 2000; // ml – prosečan / minimalan dnevni unos
   const [intake, setIntake] = useState(0);
 
   const addWater = (amount: number) => {
-    setIntake((prev) => Math.min(prev + amount, DAILY_GOAL));
+    setIntake((prev) => prev + amount); // nema limita
   };
 
-  const progress = Math.round((intake / DAILY_GOAL) * 100);
+  const progress = Math.min(
+    Math.round((intake / DAILY_GOAL) * 100),
+    100
+  );
+
+  const isGoalReached = intake >= DAILY_GOAL;
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-blue-50">
@@ -20,20 +25,28 @@ export default function WaterPage() {
           Praćenje unosa vode
         </h1>
 
-        <p className="text-gray-600 mb-4">
-          Današnji unos: <b>{intake} ml</b> / 2000 ml
+        <p className="text-gray-600 mb-1">
+          Današnji unos: <b>{intake} ml</b>
         </p>
 
-        {/* Skala / progress bar */}
-        <div className="w-full bg-gray-200 rounded-full h-6 overflow-hidden mb-6">
+        <p className="text-sm text-gray-500 mb-4">
+          2000 ml je prosečan dnevni unos (minimum)
+        </p>
+
+        {/* Progress bar */}
+        <div className="w-full bg-gray-200 rounded-full h-6 overflow-hidden mb-2">
           <div
-            className="bg-blue-500 h-6 transition-all"
+            className={`h-6 transition-all ${
+              isGoalReached ? "bg-green-500" : "bg-blue-500"
+            }`}
             style={{ width: `${progress}%` }}
           />
         </div>
 
         <div className="text-sm text-gray-500 mb-6">
-          Popunjeno: {progress}%
+          {isGoalReached
+            ? "✅ Dostignut preporučeni minimum"
+            : `Popunjeno: ${progress}%`}
         </div>
 
         {/* Dugmad */}

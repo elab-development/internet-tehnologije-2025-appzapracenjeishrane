@@ -21,6 +21,7 @@ export default function Navbar() {
         <Link href="/">Home</Link>
         <Link href="/profile">Profil</Link>
         <Link href="/activities">Aktivnosti</Link>
+        <Link href="/food">Unos hrane</Link>
       </div>
 
       <button

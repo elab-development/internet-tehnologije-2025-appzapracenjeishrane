@@ -5,6 +5,8 @@ import {
   date,
   bigint,
   tinyint,
+  int,
+  uniqueIndex,
 } from "drizzle-orm/mysql-core";
 
 /* ===================== AKTIVNOST ===================== */
@@ -86,3 +88,22 @@ export const odradjeneaktivnosti = mysqlTable("odradjeneaktivnosti", {
 
   datumOa: date("datumOa", { mode: "string" }),
 });
+
+export const unosvode = mysqlTable(
+  "unosvode",
+  {
+    uvId: bigint("uvId", { mode: "bigint" }).autoincrement().primaryKey(),
+
+    korisnikId: bigint("korisnik", { mode: "bigint" }).references(
+      () => korisnik.korisnikId,
+      { onDelete: "restrict", onUpdate: "restrict" },
+    ),
+
+    datum: date("datum", { mode: "string" }),
+
+    kolicinaMl: int("kolicinaMl").notNull().default(0),
+  },
+  (t) => ({
+    uqKorisnikDatum: uniqueIndex("uq_korisnik_datum").on(t.korisnikId, t.datum),
+  }),
+);

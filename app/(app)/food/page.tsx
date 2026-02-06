@@ -3,9 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 
 type Food = {
-  hranaId: string; // bigint iz Drizzle često dođe kao string
+  hranaId: string;
   nazivHrane: string | null;
-  kalorije: string | null; // decimal često dođe kao string
+  kalorije: string | null;
+  proteini: string | null;
+  masti: string | null;
+  ugljeniHidrati: string | null;
 };
 
 export default function FoodPage() {
@@ -48,6 +51,24 @@ export default function FoodPage() {
     const grams = Number(kolicina);
     if (!Number.isFinite(kcalPer100) || !Number.isFinite(grams)) return null;
     return (grams / 100) * kcalPer100;
+  }, [selectedFood, kolicina]);
+
+  const estimatedMacros = useMemo(() => {
+    const grams = Number(kolicina);
+    if (!selectedFood || !Number.isFinite(grams)) return null;
+
+    const per100 = (val: string | null) => {
+      if (val == null) return null;
+      const n = Number(val);
+      if (!Number.isFinite(n)) return null;
+      return (grams / 100) * n;
+    };
+
+    return {
+      proteini: per100(selectedFood.proteini),
+      masti: per100(selectedFood.masti),
+      ugljeniHidrati: per100(selectedFood.ugljeniHidrati),
+    };
   }, [selectedFood, kolicina]);
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -179,13 +200,14 @@ export default function FoodPage() {
             />
           </div>
 
-          <div className="bg-gray-50 border rounded-lg p-4">
+          <div className="bg-gray-50 border rounded-lg p-4 space-y-2">
             <p className="text-sm text-gray-700">
               Izabrano:{" "}
               <span className="font-semibold">
                 {selectedFood?.nazivHrane ?? "-"}
               </span>
             </p>
+
             <p className="text-sm text-gray-700">
               Procena kalorija:{" "}
               <span className="font-semibold">
@@ -194,6 +216,35 @@ export default function FoodPage() {
                   : `${estimatedKcal.toFixed(1)} kcal`}
               </span>
             </p>
+
+            <div className="grid grid-cols-3 gap-3 pt-2">
+              <div className="bg-white border rounded-lg p-3 text-center">
+                <p className="text-xs text-gray-500">Proteini</p>
+                <p className="font-semibold text-gray-800">
+                  {estimatedMacros?.proteini == null
+                    ? "-"
+                    : `${estimatedMacros.proteini.toFixed(1)} g`}
+                </p>
+              </div>
+
+              <div className="bg-white border rounded-lg p-3 text-center">
+                <p className="text-xs text-gray-500">Masti</p>
+                <p className="font-semibold text-gray-800">
+                  {estimatedMacros?.masti == null
+                    ? "-"
+                    : `${estimatedMacros.masti.toFixed(1)} g`}
+                </p>
+              </div>
+
+              <div className="bg-white border rounded-lg p-3 text-center">
+                <p className="text-xs text-gray-500">UH</p>
+                <p className="font-semibold text-gray-800">
+                  {estimatedMacros?.ugljeniHidrati == null
+                    ? "-"
+                    : `${estimatedMacros.ugljeniHidrati.toFixed(1)} g`}
+                </p>
+              </div>
+            </div>
           </div>
 
           <button

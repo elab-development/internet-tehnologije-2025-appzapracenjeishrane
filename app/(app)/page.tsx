@@ -1,18 +1,60 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import CalorieCircle from "@/app/components/CalorieCircle/CalorieCircle";
 
+type Totals = {
+  kalorije: number;
+  proteini: number;
+  masti: number;
+  ugljeniHidrati: number;
+};
+
 export default function Home() {
   const DAILY_GOAL = 2348;
-  const STEP = 50;
 
-  const [calories, setCalories] = useState(598);
+  const [totals, setTotals] = useState<Totals>({
+    kalorije: 0,
+    proteini: 0,
+    masti: 0,
+    ugljeniHidrati: 0,
+  });
 
-  const changeCalories = (amount: number) => {
-    setCalories((prev) => Math.max(prev + amount, 0));
-  };
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+
+    fetch(`/api/konzumirana-hrana?datum=${today}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then(async (r) => {
+        if (!r.ok) throw new Error("Ne mogu da učitam dnevne unose");
+        return r.json();
+      })
+      .then((data) => {
+        setTotals({
+          kalorije: Number(data.totals.kalorije) || 0,
+          proteini: Number(data.totals.proteini) || 0,
+          masti: Number(data.totals.masti) || 0,
+          ugljeniHidrati: Number(data.totals.ugljeniHidrati) || 0,
+        });
+      })
+      .catch((err) => {
+        console.error(err);
+        alert("Greška pri učitavanju dnevnih unosa");
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <main
@@ -24,36 +66,41 @@ export default function Home() {
         <h1 className="text-2xl font-bold text-gray-800">Dobrodošao 👋</h1>
 
         {/* KRUG SA KALORIJAMA */}
-        <CalorieCircle eaten={calories} goal={DAILY_GOAL} />
+        <CalorieCircle eaten={totals.kalorije} goal={DAILY_GOAL} />
 
-        {/* INFO TEKST */}
+        {/* INFO */}
         <div className="text-center">
           <p className="text-gray-600 text-sm">Danas si uneo</p>
           <p className="font-semibold text-gray-800">
-            {calories} / {DAILY_GOAL} kcal
+            {Math.round(totals.kalorije)} / {DAILY_GOAL} kcal
           </p>
         </div>
 
-        {/* PLUS / MINUS */}
-        <div className="flex items-center gap-6">
-          <button
-            onClick={() => changeCalories(-STEP)}
-            className="w-14 h-14 rounded-full bg-gray-200 text-2xl font-bold text-gray-700 hover:bg-gray-300 transition"
-            aria-label="Smanji kalorije"
-          >
-            –
-          </button>
+        {/* MAKROI */}
+        <div className="grid grid-cols-3 gap-3 w-full">
+          <div className="bg-white border rounded-lg p-3 text-center">
+            <p className="text-xs text-gray-500">Proteini</p>
+            <p className="font-semibold text-gray-800">
+              {totals.proteini.toFixed(1)} g
+            </p>
+          </div>
 
-          <button
-            onClick={() => changeCalories(STEP)}
-            className="w-14 h-14 rounded-full bg-green-500 text-white text-2xl font-bold hover:bg-green-600 transition"
-            aria-label="Povećaj kalorije"
-          >
-            +
-          </button>
+          <div className="bg-white border rounded-lg p-3 text-center">
+            <p className="text-xs text-gray-500">Masti</p>
+            <p className="font-semibold text-gray-800">
+              {totals.masti.toFixed(1)} g
+            </p>
+          </div>
+
+          <div className="bg-white border rounded-lg p-3 text-center">
+            <p className="text-xs text-gray-500">UH</p>
+            <p className="font-semibold text-gray-800">
+              {totals.ugljeniHidrati.toFixed(1)} g
+            </p>
+          </div>
         </div>
 
-        {/* GLAVNA AKCIJA */}
+        {/* AKCIJE */}
         <Link
           href="/food"
           className="mt-2 w-full bg-green-500 text-white py-3 rounded-lg font-semibold hover:bg-green-600 transition text-center"
@@ -61,13 +108,16 @@ export default function Home() {
           Dodaj obrok
         </Link>
 
-        {/* DODATNE AKCIJE */}
         <Link
           href="/water"
           className="w-full bg-blue-500 text-white py-3 rounded-lg font-semibold hover:bg-blue-600 transition text-center"
         >
           Prati unos vode
         </Link>
+
+        {loading && (
+          <p className="text-xs text-gray-400">Učitavanje podataka…</p>
+        )}
       </div>
     </main>
   );

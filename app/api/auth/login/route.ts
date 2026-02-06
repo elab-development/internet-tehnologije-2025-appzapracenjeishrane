@@ -69,7 +69,7 @@ export async function POST(req: Request) {
     }
 
     const token = jwt.sign(
-      { id: user.korisnikId, email: user.email, uloga: user.uloga },
+      { id: user.korisnikId.toString(), email: user.email, uloga: user.uloga },
       process.env.JWT_SECRET as string,
       { expiresIn: "1d" },
     );
@@ -77,7 +77,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       token,
       user: {
-        id: user.korisnikId,
+        id: user.korisnikId.toString(),
         email: user.email,
         ime: user.ime,
         uloga: user.uloga,

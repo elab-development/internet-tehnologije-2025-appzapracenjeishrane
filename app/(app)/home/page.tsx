@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import CalorieCircle from "@/app/components/CalorieCircle/CalorieCircle";
+import { useRouter } from "next/navigation";
 
 type Totals = {
   kalorije: number;
@@ -12,6 +13,7 @@ type Totals = {
 };
 
 export default function Home() {
+  const router = useRouter();
   const DAILY_GOAL = 2348;
 
   const [totals, setTotals] = useState<Totals>({
@@ -23,6 +25,16 @@ export default function Home() {
 
   const [loading, setLoading] = useState(true);
 
+  // 🔒 zaštita rute (ako nema tokena → login)
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.replace("/login");
+      return;
+    }
+  }, [router]);
+
+  // 📊 učitavanje dnevnih podataka
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -62,13 +74,10 @@ export default function Home() {
       style={{ backgroundImage: "url('/images/background.jpg')" }}
     >
       <div className="bg-white/90 backdrop-blur-md p-8 rounded-xl shadow-lg w-[380px] flex flex-col items-center gap-7">
-        {/* NASLOV */}
         <h1 className="text-2xl font-bold text-gray-800">Dobrodošao 👋</h1>
 
-        {/* KRUG SA KALORIJAMA */}
         <CalorieCircle eaten={totals.kalorije} goal={DAILY_GOAL} />
 
-        {/* INFO */}
         <div className="text-center">
           <p className="text-gray-600 text-sm">Danas si uneo</p>
           <p className="font-semibold text-gray-800">
@@ -76,31 +85,25 @@ export default function Home() {
           </p>
         </div>
 
-        {/* MAKROI */}
         <div className="grid grid-cols-3 gap-3 w-full">
           <div className="bg-white border rounded-lg p-3 text-center">
             <p className="text-xs text-gray-500">Proteini</p>
-            <p className="font-semibold text-gray-800">
-              {totals.proteini.toFixed(1)} g
-            </p>
+            <p className="font-semibold">{totals.proteini.toFixed(1)} g</p>
           </div>
 
           <div className="bg-white border rounded-lg p-3 text-center">
             <p className="text-xs text-gray-500">Masti</p>
-            <p className="font-semibold text-gray-800">
-              {totals.masti.toFixed(1)} g
-            </p>
+            <p className="font-semibold">{totals.masti.toFixed(1)} g</p>
           </div>
 
           <div className="bg-white border rounded-lg p-3 text-center">
             <p className="text-xs text-gray-500">UH</p>
-            <p className="font-semibold text-gray-800">
+            <p className="font-semibold">
               {totals.ugljeniHidrati.toFixed(1)} g
             </p>
           </div>
         </div>
 
-        {/* AKCIJE */}
         <Link
           href="/food"
           className="mt-2 w-full bg-green-500 text-white py-3 rounded-lg font-semibold hover:bg-green-600 transition text-center"

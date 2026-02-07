@@ -26,7 +26,7 @@ export default function LoginPage() {
     }
 
     localStorage.setItem("token", data.token);
-    router.push("/"); // homepage
+    router.replace("/home"); // homepage
   };
 
   return (

@@ -176,7 +176,7 @@ export default function WaterPage() {
         </button>
 
         <Link
-          href="/"
+          href="/home"
           className="inline-block mt-6 text-blue-700 hover:underline"
         >
           ⬅ Nazad na početnu

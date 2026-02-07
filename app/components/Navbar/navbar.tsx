@@ -18,9 +18,9 @@ export default function Navbar() {
           MyDietApp
         </Link>
 
-        <Link href="/">Home</Link>
+        <Link href="/home">Home</Link>
         <Link href="/profile">Profil</Link>
-        <Link href="/activities">Aktivnosti</Link>
+        <Link href="/activity">Aktivnosti</Link>
         <Link href="/food">Unos hrane</Link>
       </div>
 

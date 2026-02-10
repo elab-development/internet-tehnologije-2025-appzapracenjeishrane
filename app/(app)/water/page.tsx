@@ -75,7 +75,6 @@ export default function WaterPage() {
   };
 
   const addWater = (amount: number) => {
-    // optimistički UI: odmah prikaži, pa upiši u bazu
     const newTotal = intake + amount;
     setIntake(newTotal);
     saveTotal(newTotal);
@@ -139,14 +138,13 @@ export default function WaterPage() {
             : `Popunjeno: ${progress}%`}
         </div>
 
-        {/* Dugmad */}
         <div className="flex justify-between gap-3">
           <button
             onClick={() => addWater(125)}
             disabled={loading}
             className="flex-1 bg-blue-100 hover:bg-blue-200 disabled:opacity-60 text-blue-700 py-2 rounded-lg"
           >
-            🥛 Pola čaše <br /> (125 ml)
+            Pola čaše <br /> (125 ml)
           </button>
 
           <button
@@ -154,7 +152,7 @@ export default function WaterPage() {
             disabled={loading}
             className="flex-1 bg-blue-100 hover:bg-blue-200 disabled:opacity-60 text-blue-700 py-2 rounded-lg"
           >
-            🥤 Čaša <br /> (250 ml)
+            Čaša <br /> (250 ml)
           </button>
 
           <button
@@ -162,11 +160,10 @@ export default function WaterPage() {
             disabled={loading}
             className="flex-1 bg-blue-100 hover:bg-blue-200 disabled:opacity-60 text-blue-700 py-2 rounded-lg"
           >
-            🚰 Flašica <br /> (500 ml)
+            Flašica <br /> (500 ml)
           </button>
         </div>
 
-        {/* Reset (opciono) */}
         <button
           onClick={() => saveTotal(0)}
           disabled={loading}

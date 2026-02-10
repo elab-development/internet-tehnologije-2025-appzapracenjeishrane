@@ -19,7 +19,6 @@ export const aktivnost = mysqlTable("aktivnost", {
 
 /* ===================== HRANA ===================== */
 export const hrana = mysqlTable("hrana", {
-  // Ako ti u bazi hranaId NIJE auto-increment, izbaci .autoincrement()
   hranaId: bigint("hranaId", { mode: "bigint" }).primaryKey(),
 
   nazivHrane: varchar("nazivHrane", { length: 50 }),
@@ -48,10 +47,7 @@ export const korisnik = mysqlTable("korisnik", {
 
 /* ===================== KONZUMIRANA HRANA ===================== */
 export const konzumiranahrana = mysqlTable("konzumiranahrana", {
-  // TAČNO kao u bazi: KHId
   khId: bigint("KHId", { mode: "bigint" }).autoincrement().primaryKey(),
-
-  // TAČNO kao u bazi: korisnik, hrana
   korisnikId: bigint("korisnik", { mode: "bigint" }).references(
     () => korisnik.korisnikId,
     { onDelete: "restrict", onUpdate: "restrict" },
@@ -62,10 +58,8 @@ export const konzumiranahrana = mysqlTable("konzumiranahrana", {
     onUpdate: "restrict",
   }),
 
-  // TAČNO kao u bazi: datumKH
   datumKh: date("datumKH", { mode: "string" }),
 
-  // NOVO: dodato u bazi
   kolicina: decimal("kolicina", { precision: 10, scale: 2 }),
 });
 

@@ -16,7 +16,6 @@ function getUserId(req: Request): bigint | null {
   }
 }
 
-// ✅ GET: vrati dnevne unose + totale
 export async function GET(req: Request) {
   const userId = getUserId(req);
   if (!userId) {
@@ -60,7 +59,6 @@ export async function GET(req: Request) {
   return NextResponse.json({ items: rows, totals });
 }
 
-// ✅ POST: dodaj novi unos (nema zabrane da ista hrana ide više puta u danu)
 export async function POST(req: Request) {
   const userId = getUserId(req);
   if (!userId) {

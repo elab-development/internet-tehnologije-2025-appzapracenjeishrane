@@ -36,7 +36,6 @@ export async function POST(req: Request) {
     console.log("LOGIN db match count:", result.length);
 
     if (result.length === 0) {
-      // dodatni dokaz: izlistaj sve emaile iz te baze (privremeno)
       const all = await db.select().from(korisnik);
       console.log(
         "LOGIN ALL USERS (emails):",

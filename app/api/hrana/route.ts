@@ -17,7 +17,6 @@ function isAuthed(req: Request): boolean {
 export async function GET() {
   const result = await db.select().from(hrana);
 
-  // BigInt safe (ako hranaId dolazi kao bigint)
   const safe = result.map((r: any) => ({
     ...r,
     hranaId: r.hranaId?.toString?.() ?? r.hranaId,
@@ -59,15 +58,13 @@ export async function POST(req: Request) {
     );
   }
 
-  // Ako ti hranaId NIJE autoincrement u bazi, moraš ga ručno generisati.
-  // Ako jeste autoincrement, ovo radi odmah.
   await db.insert(hrana).values({
     nazivHrane: String(nazivHrane).trim(),
     kalorije: kcal,
     proteini: p,
     masti: f,
     ugljeniHidrati: uh,
-    prihvacena: 1, // ili 0 ako želiš da admin potvrdi
+    prihvacena: 1,
   } as any);
 
   return NextResponse.json({ message: "Hrana dodata ✅" });

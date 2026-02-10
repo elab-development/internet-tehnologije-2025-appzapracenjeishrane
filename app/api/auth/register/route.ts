@@ -67,7 +67,6 @@ export async function POST(req: Request) {
 
     console.log("REGISTER insert result:", insertRes);
 
-    // Provera odmah posle inserta (da vidimo da li je stvarno u toj bazi)
     const check = await db
       .select()
       .from(korisnik)

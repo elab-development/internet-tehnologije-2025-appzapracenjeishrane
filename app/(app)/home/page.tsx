@@ -34,7 +34,6 @@ export default function Home() {
     [foodTotals.kalorije, burned],
   );
 
-  // 🔒 zaštita rute
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -96,7 +95,6 @@ export default function Home() {
       <div className="bg-white/90 backdrop-blur-md p-8 rounded-xl shadow-lg w-[420px] flex flex-col items-center gap-6">
         <h1 className="text-2xl font-bold text-gray-800">Dobrodošao 👋</h1>
 
-        {/* Krug sada koristi dinamičan cilj */}
         <CalorieCircle eaten={foodTotals.kalorije} goal={dynamicGoal} />
 
         <div className="text-center">

@@ -48,7 +48,6 @@ export async function POST(req: Request) {
     );
   }
 
-  // prosekKalorija je decimal -> Drizzle često želi string
   await db.insert(aktivnost).values({
     nazivAktivnosti: String(nazivAktivnosti).trim(),
     prosekKalorija: String(kcal),

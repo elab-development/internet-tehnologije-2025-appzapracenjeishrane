@@ -10,18 +10,15 @@ export default function CalorieCircle({ eaten, goal }: Props) {
   const circumference = normalizedRadius * 2 * Math.PI;
 
   const progress = Math.min(eaten / goal, 1);
-  const strokeDashoffset =
-    circumference - progress * circumference;
+  const strokeDashoffset = circumference - progress * circumference;
 
   return (
     <div className="relative w-[260px] h-[260px]">
-      {/* SVG – SAVRŠENO CENTRIRAN */}
       <svg
         className="absolute inset-0 m-auto"
         height={radius * 2}
         width={radius * 2}
       >
-        {/* background */}
         <circle
           stroke="#e5e7eb"
           fill="transparent"
@@ -31,7 +28,6 @@ export default function CalorieCircle({ eaten, goal }: Props) {
           cy={radius}
         />
 
-        {/* progress */}
         <circle
           stroke="#22c55e"
           fill="transparent"
@@ -50,15 +46,10 @@ export default function CalorieCircle({ eaten, goal }: Props) {
         />
       </svg>
 
-      {/* TEKST – TAKOĐE CENTAR */}
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
         <p className="text-sm text-gray-500">Kalorije</p>
-        <p className="text-4xl font-bold text-gray-800">
-          {eaten}
-        </p>
-        <p className="text-sm text-gray-500">
-          od {goal}
-        </p>
+        <p className="text-4xl font-bold text-gray-800">{eaten}</p>
+        <p className="text-sm text-gray-500">od {goal}</p>
       </div>
     </div>
   );

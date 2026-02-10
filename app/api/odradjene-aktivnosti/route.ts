@@ -59,7 +59,6 @@ export async function GET(req: Request) {
   });
 }
 
-// POST /api/odradjene-aktivnosti { aktivnostId, datum, trajanjeMin }
 export async function POST(req: Request) {
   const userId = getUserId(req);
   if (!userId) {

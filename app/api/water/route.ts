@@ -16,7 +16,6 @@ function getUserId(req: Request): bigint | null {
   }
 }
 
-// GET /api/water?datum=YYYY-MM-DD  -> vraca kolicinu za taj dan
 export async function GET(req: Request) {
   const userId = getUserId(req);
   if (!userId) {
@@ -39,7 +38,6 @@ export async function GET(req: Request) {
   return NextResponse.json({ datum, kolicinaMl });
 }
 
-// POST /api/water  { datum, kolicinaMl }  -> upsert (setuje vrednost)
 export async function POST(req: Request) {
   const userId = getUserId(req);
   if (!userId) {
@@ -64,7 +62,6 @@ export async function POST(req: Request) {
     );
   }
 
-  // Upsert zahvaljujući UNIQUE(korisnik, datum)
   await db
     .insert(unosvode)
     .values({

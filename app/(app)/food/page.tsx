@@ -12,9 +12,23 @@ type Food = {
   ugljeniHidrati: string | null;
 };
 
+// debounce helper
+function useDebouncedValue<T>(value: T, delay = 200) {
+  const [debounced, setDebounced] = useState(value);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(t);
+  }, [value, delay]);
+
+  return debounced;
+}
+
 export default function FoodPage() {
   const [foods, setFoods] = useState<Food[]>([]);
   const [query, setQuery] = useState("");
+  const debouncedQuery = useDebouncedValue(query, 200);
+
   const [selectedId, setSelectedId] = useState<string>("");
   const [datum, setDatum] = useState(() =>
     new Date().toISOString().slice(0, 10),
@@ -28,41 +42,49 @@ export default function FoodPage() {
         if (!r.ok) throw new Error("Ne mogu da učitam hranu");
         return r.json();
       })
-      .then((data) => setFoods(data))
+      .then((data) => setFoods(Array.isArray(data) ? data : []))
       .catch((e) => alert(e.message));
   }, []);
 
+  // opcionalno: ako korisnik promeni search, a selektovana hrana više nije u rezultatima
+  useEffect(() => {
+    if (!selectedId) return;
+    const existsInFiltered = foods.some(
+      (f) => String(f.hranaId) === String(selectedId),
+    );
+    if (!existsInFiltered) setSelectedId("");
+  }, [debouncedQuery]); // namerno debounce, da ne resetuje na svaki karakter
+
   const filteredFoods = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = debouncedQuery.trim().toLowerCase();
     const list = !q
       ? foods
       : foods.filter((f) => (f.nazivHrane ?? "").toLowerCase().includes(q));
 
-    // da dropdown ne bude ogroman
     return list.slice(0, 50);
-  }, [foods, query]);
+  }, [foods, debouncedQuery]);
 
   const selectedFood = useMemo(() => {
     return foods.find((f) => String(f.hranaId) === String(selectedId));
   }, [foods, selectedId]);
 
+  const gramsNum = useMemo(() => Number(kolicina), [kolicina]);
+
   const estimatedKcal = useMemo(() => {
     if (!selectedFood?.kalorije) return null;
     const kcalPer100 = Number(selectedFood.kalorije);
-    const grams = Number(kolicina);
-    if (!Number.isFinite(kcalPer100) || !Number.isFinite(grams)) return null;
-    return (grams / 100) * kcalPer100;
-  }, [selectedFood, kolicina]);
+    if (!Number.isFinite(kcalPer100) || !Number.isFinite(gramsNum)) return null;
+    return (gramsNum / 100) * kcalPer100;
+  }, [selectedFood, gramsNum]);
 
   const estimatedMacros = useMemo(() => {
-    const grams = Number(kolicina);
-    if (!selectedFood || !Number.isFinite(grams)) return null;
+    if (!selectedFood || !Number.isFinite(gramsNum)) return null;
 
     const per100 = (val: string | null) => {
       if (val == null) return null;
       const n = Number(val);
       if (!Number.isFinite(n)) return null;
-      return (grams / 100) * n;
+      return (gramsNum / 100) * n;
     };
 
     return {
@@ -70,7 +92,7 @@ export default function FoodPage() {
       masti: per100(selectedFood.masti),
       ugljeniHidrati: per100(selectedFood.ugljeniHidrati),
     };
-  }, [selectedFood, kolicina]);
+  }, [selectedFood, gramsNum]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,8 +108,7 @@ export default function FoodPage() {
       return;
     }
 
-    const grams = Number(kolicina);
-    if (!Number.isFinite(grams) || grams <= 0) {
+    if (!Number.isFinite(gramsNum) || gramsNum <= 0) {
       alert("Količina mora biti pozitivan broj.");
       return;
     }
@@ -103,7 +124,7 @@ export default function FoodPage() {
         body: JSON.stringify({
           hranaId: selectedId,
           datum,
-          kolicina: grams, // server će pretvoriti u string za decimal
+          kolicina: gramsNum, // server će pretvoriti u string za decimal
         }),
       });
 
@@ -114,9 +135,10 @@ export default function FoodPage() {
       }
 
       alert("Unos hrane je sačuvan ✅");
-      // opcionalno: resetuj količinu / pretragu
+      // opcionalno: reset
       // setKolicina("100");
       // setQuery("");
+      // setSelectedId("");
     } catch (err: any) {
       alert(err?.message ?? "Greška");
     } finally {
@@ -159,9 +181,22 @@ export default function FoodPage() {
               placeholder="npr. banana, piletina..."
               className="w-full px-4 py-2 border rounded-lg text-gray-900 placeholder-gray-500"
             />
-            <p className="mt-1 text-xs text-gray-500">
-              Prikazuje se do 50 rezultata u listi.
-            </p>
+            <div className="mt-1 flex items-center justify-between">
+              <p className="text-xs text-gray-500">
+                Prikazuje se do 50 rezultata u listi.
+              </p>
+              {!!debouncedQuery.trim() && (
+                <p className="text-xs text-gray-500">
+                  Rezultati: {filteredFoods.length}
+                </p>
+              )}
+            </div>
+
+            {debouncedQuery.trim() && filteredFoods.length === 0 && (
+              <p className="mt-2 text-sm text-red-600">
+                Nema rezultata za pretragu.
+              </p>
+            )}
           </div>
 
           <div>
@@ -173,6 +208,7 @@ export default function FoodPage() {
               onChange={(e) => setSelectedId(e.target.value)}
               className="w-full px-4 py-2 border rounded-lg text-gray-900"
               required
+              disabled={foods.length === 0}
             >
               <option value="" disabled>
                 -- izaberi --

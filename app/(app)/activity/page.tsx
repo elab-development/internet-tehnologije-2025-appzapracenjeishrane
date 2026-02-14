@@ -9,9 +9,23 @@ type Activity = {
   prosekKalorija: string | null; // decimal -> string
 };
 
+// debounce helper
+function useDebouncedValue<T>(value: T, delay = 200) {
+  const [debounced, setDebounced] = useState(value);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(t);
+  }, [value, delay]);
+
+  return debounced;
+}
+
 export default function ActivityPage() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [query, setQuery] = useState("");
+  const debouncedQuery = useDebouncedValue(query, 200);
+
   const [selectedId, setSelectedId] = useState("");
   const [datum, setDatum] = useState(() =>
     new Date().toISOString().slice(0, 10),
@@ -25,32 +39,34 @@ export default function ActivityPage() {
         if (!r.ok) throw new Error("Ne mogu da učitam aktivnosti");
         return r.json();
       })
-      .then((data) => setActivities(data))
+      .then((data) => setActivities(Array.isArray(data) ? data : []))
       .catch((e) => alert(e.message));
   }, []);
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = debouncedQuery.trim().toLowerCase();
     const list = !q
       ? activities
       : activities.filter((a) =>
           (a.nazivAktivnosti ?? "").toLowerCase().includes(q),
         );
+
     return list.slice(0, 50);
-  }, [activities, query]);
+  }, [activities, debouncedQuery]);
 
   const selected = useMemo(
     () => activities.find((a) => String(a.aktivnostId) === String(selectedId)),
     [activities, selectedId],
   );
 
+  const minsNum = useMemo(() => Number(trajanjeMin), [trajanjeMin]);
+
   const estimatedBurn = useMemo(() => {
     if (!selected?.prosekKalorija) return null;
     const kcalPerHour = Number(selected.prosekKalorija);
-    const mins = Number(trajanjeMin);
-    if (!Number.isFinite(kcalPerHour) || !Number.isFinite(mins)) return null;
-    return (mins / 60) * kcalPerHour;
-  }, [selected, trajanjeMin]);
+    if (!Number.isFinite(kcalPerHour) || !Number.isFinite(minsNum)) return null;
+    return (minsNum / 60) * kcalPerHour;
+  }, [selected, minsNum]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,8 +82,7 @@ export default function ActivityPage() {
       return;
     }
 
-    const mins = Number(trajanjeMin);
-    if (!Number.isFinite(mins) || mins <= 0) {
+    if (!Number.isFinite(minsNum) || minsNum <= 0) {
       alert("Trajanje mora biti pozitivan broj");
       return;
     }
@@ -83,7 +98,7 @@ export default function ActivityPage() {
         body: JSON.stringify({
           aktivnostId: selectedId,
           datum,
-          trajanjeMin: mins,
+          trajanjeMin: minsNum,
         }),
       });
 
@@ -94,6 +109,10 @@ export default function ActivityPage() {
       }
 
       alert("Aktivnost je sačuvana ✅");
+      // opcionalno:
+      // setTrajanjeMin("30");
+      // setQuery("");
+      // setSelectedId("");
     } catch (err: any) {
       alert(err?.message ?? "Greška");
     } finally {
@@ -149,6 +168,22 @@ export default function ActivityPage() {
               placeholder="npr. trčanje, teretana..."
               className="w-full px-4 py-2 border rounded-lg text-gray-900 placeholder-gray-500"
             />
+            <div className="mt-1 flex items-center justify-between">
+              <p className="text-xs text-gray-500">
+                Prikazuje se do 50 rezultata u listi.
+              </p>
+              {!!debouncedQuery.trim() && (
+                <p className="text-xs text-gray-500">
+                  Rezultati: {filtered.length}
+                </p>
+              )}
+            </div>
+
+            {debouncedQuery.trim() && filtered.length === 0 && (
+              <p className="mt-2 text-sm text-red-600">
+                Nema rezultata za pretragu.
+              </p>
+            )}
           </div>
 
           <div>
@@ -160,6 +195,7 @@ export default function ActivityPage() {
               onChange={(e) => setSelectedId(e.target.value)}
               className="w-full px-4 py-2 border rounded-lg text-gray-900"
               required
+              disabled={activities.length === 0}
             >
               <option value="" disabled>
                 -- izaberi --

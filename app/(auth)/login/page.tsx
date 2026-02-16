@@ -19,6 +19,7 @@ export default function LoginPage() {
     });
 
     const data = await res.json();
+    console.log("LOGIN RESPONSE:", data);
 
     if (!res.ok) {
       alert(data.error);
@@ -26,7 +27,14 @@ export default function LoginPage() {
     }
 
     localStorage.setItem("token", data.token);
-    router.replace("/home"); // homepage
+
+    // Provera uloge
+    if (data.user.uloga === "ADMIN") {
+      router.replace("/admin");
+    } else {
+      router.replace("/home");
+    }
+
   };
 
   return (

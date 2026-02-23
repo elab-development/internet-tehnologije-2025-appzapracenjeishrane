@@ -11,9 +11,32 @@ type Totals = {
   ugljeniHidrati: number;
 };
 
+type PremiumPlan = {
+  maintenanceKcal: number;
+  targetKcal: number;
+  proteinG: number;
+  mastiG: number;
+  ugljeniHidratiG: number;
+  vodaMl: number;
+  bmi: number | null;
+  razlikaDoCiljaKg: number;
+  smer: "SMANJENJE" | "POVECANJE" | "ODRZAVANJE";
+  procenaNedeljnogPomerajaKg: number;
+  napomena: string;
+};
+
+type ProfilePayload = {
+  user?: {
+    uloga?: string | null;
+    tezina?: number | null;
+    ciljnaTezina?: number | null;
+  };
+  premiumPlan?: PremiumPlan | null;
+};
+
 export default function Home() {
-  const BASE_DAILY_GOAL = 2348; // tvoj osnovni cilj
-  const WATER_GOAL = 2000; // ml
+  const DEFAULT_BASE_DAILY_GOAL = 2348;
+  const WATER_GOAL = 2000;
 
   const [totals, setTotals] = useState<Totals>({
     kalorije: 0,
@@ -21,54 +44,75 @@ export default function Home() {
     masti: 0,
     ugljeniHidrati: 0,
   });
-
   const [burnedKcal, setBurnedKcal] = useState(0);
   const [waterMl, setWaterMl] = useState(0);
-
+  const [premiumPlan, setPremiumPlan] = useState<PremiumPlan | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [currentWeight, setCurrentWeight] = useState<number | null>(null);
+  const [targetWeight, setTargetWeight] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
-
-  // Ako ste ranije dodavali logiku da aktivnosti povecavaju cilj:
-  const dailyGoal = useMemo(() => BASE_DAILY_GOAL + burnedKcal, [burnedKcal]);
+  const premiumBaseGoal = premiumPlan?.targetKcal ?? DEFAULT_BASE_DAILY_GOAL;
+  const isPremium = String(userRole ?? "").toUpperCase() === "PREMIUM";
+  const effectiveWaterGoal =
+    isPremium && premiumPlan ? premiumPlan.vodaMl : WATER_GOAL;
+  const dailyGoal = useMemo(
+    () => premiumBaseGoal + burnedKcal,
+    [premiumBaseGoal, burnedKcal],
+  );
+  const remainingKg =
+    currentWeight != null && targetWeight != null
+      ? Math.abs(currentWeight - targetWeight)
+      : null;
+  const isGoalReached = remainingKg != null && remainingKg <= 0.1;
+  const weightGoalProgress = useMemo(() => {
+    if (remainingKg == null) return 0;
+    const visualRangeKg = 10; // jednostavan vizuelni opseg, ne istorijski procenat
+    const clamped = Math.min(Math.max(remainingKg, 0), visualRangeKg);
+    return Math.round(((visualRangeKg - clamped) / visualRangeKg) * 100);
+  }, [remainingKg]);
 
   const waterProgress = useMemo(() => {
-    const p = Math.round((waterMl / WATER_GOAL) * 100);
+    const p = Math.round((waterMl / effectiveWaterGoal) * 100);
     return Math.min(Math.max(p, 0), 100);
-  }, [waterMl]);
+  }, [waterMl, effectiveWaterGoal]);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      // ako nema tokena, UI može da ostane ali bez podataka (ili redirect kod vas)
-      setLoading(false);
-      return;
-    }
+    const loadHome = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setLoading(false);
+        return;
+      }
 
-    setLoading(true);
+      setLoading(true);
 
-    const headers = { Authorization: `Bearer ${token}` };
+      try {
+        const headers = { Authorization: `Bearer ${token}` };
+        const [foodData, activityData, waterData, profileData] = await Promise.all([
+          fetch(`/api/konzumirana-hrana?datum=${today}`, { headers }).then(
+            async (r) => {
+              if (!r.ok) throw new Error("Ne mogu da ucitam unose hrane");
+              return r.json();
+            },
+          ),
+          fetch(`/api/odradjene-aktivnosti?datum=${today}`, { headers }).then(
+            async (r) => {
+              if (!r.ok) throw new Error("Ne mogu da ucitam aktivnosti");
+              return r.json();
+            },
+          ),
+          fetch(`/api/water?datum=${today}`, { headers }).then(async (r) => {
+            if (!r.ok) throw new Error("Ne mogu da ucitam unos vode");
+            return r.json();
+          }),
+          fetch("/api/profile", { headers }).then(async (r) => {
+            if (!r.ok) throw new Error("Ne mogu da ucitam profil");
+            return r.json();
+          }),
+        ]);
 
-    Promise.all([
-      fetch(`/api/konzumirana-hrana?datum=${today}`, { headers }).then(
-        async (r) => {
-          if (!r.ok) throw new Error("Ne mogu da učitam unose hrane");
-          return r.json();
-        },
-      ),
-      fetch(`/api/odradjene-aktivnosti?datum=${today}`, { headers }).then(
-        async (r) => {
-          if (!r.ok) throw new Error("Ne mogu da učitam aktivnosti");
-          return r.json();
-        },
-      ),
-      fetch(`/api/water?datum=${today}`, { headers }).then(async (r) => {
-        if (!r.ok) throw new Error("Ne mogu da učitam unos vode");
-        return r.json();
-      }),
-    ])
-      .then(([foodData, activityData, waterData]) => {
-        // Food totals (očekujemo foodData.totals)
         const t = foodData?.totals ?? foodData ?? {};
         setTotals({
           kalorije: Number(t.kalorije) || 0,
@@ -77,7 +121,6 @@ export default function Home() {
           ugljeniHidrati: Number(t.ugljeniHidrati) || 0,
         });
 
-        // Activity totals (očekujemo activityData.totals.potroseneKalorije ili activityData.totals.burned)
         const at = activityData?.totals ?? activityData ?? {};
         const burned =
           Number(at.potroseneKalorije) ||
@@ -86,19 +129,35 @@ export default function Home() {
           0;
         setBurnedKcal(burned);
 
-        // Water (očekujemo waterData.kolicinaMl ili waterData.intake)
         const wm =
           Number(waterData?.kolicinaMl) ||
           Number(waterData?.intake) ||
           Number(waterData?.unos) ||
           0;
         setWaterMl(wm);
-      })
-      .catch((err) => {
+
+        const profile = (profileData ?? {}) as ProfilePayload;
+        setPremiumPlan(profile.premiumPlan ?? null);
+        setUserRole(String(profile.user?.uloga ?? ""));
+        setCurrentWeight(
+          profile.user?.tezina != null ? Number(profile.user.tezina) : null,
+        );
+        setTargetWeight(
+          profile.user?.ciljnaTezina != null
+            ? Number(profile.user.ciljnaTezina)
+            : null,
+        );
+      } catch (err) {
         console.error(err);
-        alert(err?.message ?? "Greška pri učitavanju podataka");
-      })
-      .finally(() => setLoading(false));
+        alert(
+          err instanceof Error ? err.message : "Greska pri ucitavanju podataka",
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void loadHome();
   }, [today]);
 
   return (
@@ -107,29 +166,28 @@ export default function Home() {
       style={{ backgroundImage: "url('/images/background.jpg')" }}
     >
       <div className="bg-white/90 backdrop-blur-md p-10 rounded-2xl shadow-xl w-[440px] max-w-full flex flex-col items-center gap-7">
-        <h1 className="text-2xl font-bold text-gray-800">Dobrodošao 👋</h1>
+        <h1 className="text-2xl font-bold text-gray-800">Dobrodosao</h1>
 
-        {/* KRUG (kalorije / cilj) */}
         <CalorieCircle eaten={totals.kalorije} goal={dailyGoal} />
 
-        {/* INFO */}
         <div className="text-center">
           <p className="text-gray-600 text-sm">Danas si uneo</p>
           <p className="font-semibold text-gray-800">
             {Math.round(totals.kalorije)} / {Math.round(dailyGoal)} kcal
           </p>
           <p className="text-xs text-gray-500 mt-1">
-            Osnovni cilj: {BASE_DAILY_GOAL} kcal • Aktivnosti: +
+            {isPremium ? "Premium cilj" : "Osnovni cilj"}:{" "}
+            {Math.round(premiumBaseGoal)} kcal - Aktivnosti: +
             {Math.round(burnedKcal)} kcal
           </p>
         </div>
 
-        {/* MAKROI */}
         <div className="grid grid-cols-3 gap-3 w-full">
           <div className="bg-white border rounded-lg p-3 text-center">
             <p className="text-xs text-gray-500">Proteini</p>
             <p className="font-semibold text-gray-800">
               {totals.proteini.toFixed(1)} g
+              {isPremium && premiumPlan ? ` / ${premiumPlan.proteinG} g` : ""}
             </p>
           </div>
 
@@ -137,6 +195,7 @@ export default function Home() {
             <p className="text-xs text-gray-500">Masti</p>
             <p className="font-semibold text-gray-800">
               {totals.masti.toFixed(1)} g
+              {isPremium && premiumPlan ? ` / ${premiumPlan.mastiG} g` : ""}
             </p>
           </div>
 
@@ -144,24 +203,88 @@ export default function Home() {
             <p className="text-xs text-gray-500">UH</p>
             <p className="font-semibold text-gray-800">
               {totals.ugljeniHidrati.toFixed(1)} g
+              {isPremium && premiumPlan
+                ? ` / ${premiumPlan.ugljeniHidratiG} g`
+                : ""}
             </p>
           </div>
         </div>
 
-        {/* NOVA 2 POLJA: aktivnosti + voda */}
+        {isPremium && premiumPlan && currentWeight != null && targetWeight != null && (
+          <div className="w-full rounded-2xl border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-green-900">
+                  Napredak ka ciljnoj tezini
+                </p>
+                <p className="text-xs text-green-800/80">
+                  Napredak
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-gray-600">Preostalo</p>
+                <p className="text-lg font-bold text-gray-800">
+                  {remainingKg?.toFixed(1)} kg
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <div className="relative h-6 rounded-full bg-white/80 border border-green-100 overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${
+                    isGoalReached
+                      ? "bg-gradient-to-r from-green-500 to-emerald-600"
+                      : "bg-gradient-to-r from-lime-400 to-green-500"
+                  }`}
+                  style={{ width: `${Math.max(6, weightGoalProgress)}%` }}
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-xs font-semibold text-gray-800">
+                    {isGoalReached
+                      ? "Cilj dostignut"
+                      : `${weightGoalProgress}% blizu cilja`}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              <div className="rounded-lg bg-white/90 border p-2 text-center">
+                <p className="text-[11px] text-gray-500">Trenutna</p>
+                <p className="font-semibold text-gray-800">
+                  {currentWeight.toFixed(1)} kg
+                </p>
+              </div>
+              <div className="rounded-lg bg-white/90 border p-2 text-center">
+                <p className="text-[11px] text-gray-500">Zeljena</p>
+                <p className="font-semibold text-gray-800">
+                  {targetWeight.toFixed(1)} kg
+                </p>
+              </div>
+              <div className="rounded-lg bg-white/90 border p-2 text-center">
+                <p className="text-[11px] text-gray-500">Smer</p>
+                <p className="font-semibold text-gray-800">
+                  {premiumPlan.smer === "SMANJENJE" && "Smanjenje"}
+                  {premiumPlan.smer === "POVECANJE" && "Povecanje"}
+                  {premiumPlan.smer === "ODRZAVANJE" && "Odrzavanje"}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-3 w-full">
-          {/* Aktivnosti */}
           <div className="bg-white border rounded-lg p-3">
-            <p className="text-xs text-gray-500">Potrošeno (aktivnosti)</p>
+            <p className="text-xs text-gray-500">Potroseno (aktivnosti)</p>
             <p className="font-semibold text-gray-800">
               {burnedKcal.toFixed(1)} kcal
             </p>
             <p className="text-[11px] text-gray-500 mt-1">
-              Povećava dnevni cilj
+              Povecava dnevni cilj
             </p>
           </div>
 
-          {/* Voda */}
           <div className="bg-white border rounded-lg p-3">
             <div className="flex items-center justify-between">
               <p className="text-xs text-gray-500">Voda</p>
@@ -176,12 +299,11 @@ export default function Home() {
             </div>
 
             <p className="font-semibold text-gray-800 mt-2">
-              {Math.round(waterMl)} / {WATER_GOAL} ml
+              {Math.round(waterMl)} / {effectiveWaterGoal} ml
             </p>
           </div>
         </div>
 
-        {/* AKCIJE */}
         <Link
           href="/food"
           className="mt-2 w-full bg-green-500 text-white py-4 rounded-xl font-semibold text-lg hover:bg-green-600 transition text-center"
@@ -203,9 +325,7 @@ export default function Home() {
           Dodaj aktivnost
         </Link>
 
-        {loading && (
-          <p className="text-xs text-gray-400">Učitavanje podataka…</p>
-        )}
+        {loading && <p className="text-xs text-gray-400">Ucitavanje podataka...</p>}
       </div>
     </main>
   );

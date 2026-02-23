@@ -7,6 +7,7 @@ export default function RegisterPage() {
   const [ime, setIme] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [uloga, setUloga] = useState<"PREMIUM" | "ADMIN" | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,7 +18,8 @@ export default function RegisterPage() {
       body: JSON.stringify({
         ime,
         email,
-        sifra: password, // važno: backend očekuje "sifra"
+        sifra: password,
+        uloga,
       }),
     });
 
@@ -28,7 +30,7 @@ export default function RegisterPage() {
       return;
     }
 
-    alert("Uspešna registracija");
+    alert("Uspesna registracija");
   };
 
   return (
@@ -42,7 +44,6 @@ export default function RegisterPage() {
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* IME */}
           <input
             type="text"
             placeholder="Ime"
@@ -52,7 +53,6 @@ export default function RegisterPage() {
             required
           />
 
-          {/* EMAIL */}
           <input
             type="email"
             placeholder="Email"
@@ -62,7 +62,6 @@ export default function RegisterPage() {
             required
           />
 
-          {/* PASSWORD */}
           <input
             type="password"
             placeholder="Password"
@@ -71,6 +70,38 @@ export default function RegisterPage() {
             className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-900 placeholder-gray-500"
             required
           />
+
+          <div className="rounded-lg border border-gray-300 p-3">
+            <p className="mb-2 text-sm font-medium text-gray-700">
+              Tip korisnika
+            </p>
+
+            <div className="flex items-center gap-6">
+              <label className="flex items-center gap-2 text-gray-800 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={uloga === "PREMIUM"}
+                  onChange={() =>
+                    setUloga((prev) => (prev === "PREMIUM" ? null : "PREMIUM"))
+                  }
+                  className="h-4 w-4 accent-green-600"
+                />
+                <span>Premium</span>
+              </label>
+
+              <label className="flex items-center gap-2 text-gray-800 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={uloga === "ADMIN"}
+                  onChange={() =>
+                    setUloga((prev) => (prev === "ADMIN" ? null : "ADMIN"))
+                  }
+                  className="h-4 w-4 accent-green-600"
+                />
+                <span>Admin</span>
+              </label>
+            </div>
+          </div>
 
           <button
             type="submit"
@@ -81,7 +112,7 @@ export default function RegisterPage() {
         </form>
 
         <p className="mt-4 text-center text-gray-600">
-          Već imaš nalog?{" "}
+          Vec imas nalog?{" "}
           <Link href="/login" className="text-blue-500 hover:underline">
             Uloguj se
           </Link>

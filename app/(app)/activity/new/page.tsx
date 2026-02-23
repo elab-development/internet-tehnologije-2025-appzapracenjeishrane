@@ -51,7 +51,7 @@ export default function NewActivityPage() {
         return;
       }
 
-      alert("Aktivnost dodata ✅");
+      alert("Aktivnost je poslata adminu na odobrenje");
       router.push("/activity");
     } catch (err: any) {
       alert(err?.message ?? "Greška");

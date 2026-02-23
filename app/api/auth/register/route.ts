@@ -13,12 +13,20 @@ export async function POST(req: Request) {
     const rawEmail = body?.email;
     const rawSifra = body?.sifra;
     const rawIme = body?.ime;
+    const rawUloga = body?.uloga;
 
     const email = String(rawEmail ?? "")
       .trim()
       .toLowerCase();
     const sifra = String(rawSifra ?? ""); // bez trim
     const ime = String(rawIme ?? "").trim();
+    const requestedUloga = String(rawUloga ?? "")
+      .trim()
+      .toUpperCase();
+    const uloga =
+      requestedUloga === "ADMIN" || requestedUloga === "PREMIUM"
+        ? requestedUloga
+        : "OBICAN";
 
     const tezina = body?.tezina ?? null;
     const visina = body?.visina ?? null;
@@ -29,6 +37,8 @@ export async function POST(req: Request) {
       email,
       sifraLen: sifra.length,
       imeLen: ime.length,
+      requestedUloga,
+      uloga,
       tezina,
       visina,
       ciljnaTezina,
@@ -62,7 +72,7 @@ export async function POST(req: Request) {
       tezina,
       visina,
       ciljnaTezina,
-      uloga: "OBICAN",
+      uloga,
     });
 
     console.log("REGISTER insert result:", insertRes);

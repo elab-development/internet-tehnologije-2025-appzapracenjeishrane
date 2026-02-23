@@ -17,6 +17,7 @@ export const aktivnost = mysqlTable("aktivnost", {
 
   nazivAktivnosti: varchar("nazivAktivnosti", { length: 50 }),
   prosekKalorija: decimal("prosekKalorija", { precision: 10, scale: 2 }),
+  prihvacena: tinyint("prihvacena"),
 });
 
 /* ===================== HRANA ===================== */

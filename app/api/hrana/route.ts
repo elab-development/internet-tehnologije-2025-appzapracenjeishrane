@@ -1,5 +1,6 @@
 import { db } from "@/src/db";
 import { hrana } from "@/src/db/schema";
+import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 
@@ -15,7 +16,7 @@ function isAuthed(req: Request): boolean {
 }
 
 export async function GET() {
-  const result = await db.select().from(hrana);
+  const result = await db.select().from(hrana).where(eq(hrana.prihvacena, 1));
 
   const safe = result.map((r: any) => ({
     ...r,
@@ -64,8 +65,8 @@ export async function POST(req: Request) {
     proteini: p,
     masti: f,
     ugljeniHidrati: uh,
-    prihvacena: 1,
+    prihvacena: 0,
   } as any);
 
-  return NextResponse.json({ message: "Hrana dodata ✅" });
+  return NextResponse.json({ message: "Hrana je poslata na odobrenje" });
 }

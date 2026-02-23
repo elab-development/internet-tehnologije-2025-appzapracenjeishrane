@@ -1,5 +1,6 @@
 import { db } from "@/src/db";
 import { aktivnost } from "@/src/db/schema";
+import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 
@@ -15,7 +16,10 @@ function isAuthed(req: Request) {
 }
 
 export async function GET() {
-  const result = await db.select().from(aktivnost);
+  const result = await db
+    .select()
+    .from(aktivnost)
+    .where(eq(aktivnost.prihvacena, 1));
 
   const safe = result.map((r: any) => ({
     ...r,
@@ -51,7 +55,8 @@ export async function POST(req: Request) {
   await db.insert(aktivnost).values({
     nazivAktivnosti: String(nazivAktivnosti).trim(),
     prosekKalorija: String(kcal),
+    prihvacena: 0,
   } as any);
 
-  return NextResponse.json({ message: "Aktivnost dodata ✅" });
+  return NextResponse.json({ message: "Aktivnost je poslata na odobrenje" });
 }

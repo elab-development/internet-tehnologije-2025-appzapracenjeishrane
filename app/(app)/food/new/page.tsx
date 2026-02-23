@@ -66,7 +66,7 @@ export default function NewFoodPage() {
         return;
       }
 
-      alert("Hrana je dodata ✅");
+      alert("Hrana je poslata adminu na odobrenje");
       router.push("/food");
     } catch (err: any) {
       alert(err?.message ?? "Greška");

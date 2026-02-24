@@ -36,7 +36,7 @@ function applySecurityHeaders(req: NextRequest, res: NextResponse, isApi: boolea
     : "connect-src 'self' https://api.open-meteo.com https://geocoding-api.open-meteo.com";
   const scriptSrc = isDev
     ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://www.gstatic.com"
-    : "script-src 'self' 'unsafe-inline' https://unpkg.com https://www.gstatic.com";
+    : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://www.gstatic.com https://www.google.com";
 
   const csp = [
     "default-src 'self'",

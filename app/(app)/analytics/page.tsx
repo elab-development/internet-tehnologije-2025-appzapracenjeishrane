@@ -216,7 +216,10 @@ export default function AnalyticsPage() {
   );
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-sky-50 via-cyan-50 to-emerald-50 p-6">
+    <main
+      className="min-h-screen bg-cover bg-center p-6"
+      style={{ backgroundImage: "url('/images/background.jpg')" }}
+    >
       <Script
         src="https://www.gstatic.com/charts/loader.js"
         strategy="afterInteractive"

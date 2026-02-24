@@ -186,4 +186,61 @@ git push
 - Ukloniti debug `console.log` iz auth ruta pre produkcije
 - Dodati testove (API / integration)
 
+## Zahtevi za visu ocenu - status
+
+Status (stanje u repou):
+
+1. `README` sa opisom i pokretanjem aplikacije - uradjeno
+2. Najmanje 2 eksterna API-ja - uradjeno
+3. CI/CD pipeline (testovi + build + Docker build) - uradjeno (GitHub Actions)
+4. Bezbednosne zastite (min 3) - uradjeno
+5. Automatizovani testovi - uradjeno (unit testovi za premium plan)
+6. Vizualizacija podataka - uradjeno (`/analytics`, Google Charts)
+7. Git grane (`develop` + feature grane) - potrebno napraviti/pushovati
+8. Cloud deployment - potrebno postaviti na izabranu platformu
+
+Sta je konkretno implementirano:
+
+- Eksterni API #1: `Google Charts` (vizualizacija na `/analytics`)
+- Eksterni API #2: `Open-Meteo API` (vremenski podaci na `/analytics`)
+- CI pipeline: `.github/workflows/ci.yml`
+- Automatizovani testovi: `tests/premiumPlan.test.mjs` (`npm test`)
+- Bezbednost (minimum 3):
+- CORS restrikcija za `/api/*`
+- CSRF mitigacija preko same-origin `Origin` provere za mutirajuce API zahteve
+- Security headers / CSP (`Content-Security-Policy`, `X-Frame-Options`, `nosniff`, itd.)
+
+### Git grane (obavezno uradi pre predaje)
+
+Primer komandi:
+
+```bash
+git checkout -b develop
+git push -u origin develop
+
+git checkout -b feature/analytics
+git push -u origin feature/analytics
+
+git checkout -b feature/ci-security
+git push -u origin feature/ci-security
+
+git checkout main
+```
+
+Ako vec imas lokalne izmene na `main`, mozes prvo commit na feature granu pa onda merge u `develop` i `main`.
+
+### Cloud deployment (sta jos treba)
+
+Najbrze opcije za ovaj projekat (Docker + Next.js + MySQL):
+
+1. `Railway` (app + MySQL servis)
+2. `Render` (Web Service + Managed PostgreSQL/MySQL alternativa, ili eksterni DB)
+3. `DigitalOcean / VPS` (Docker Compose)
+
+Minimalno za ocenu:
+
+- deploy aplikacije na javni URL
+- potvrda da rade `/`, `/login`, `/swagger` i `/analytics`
+- upisati produkcioni URL u README
+
 

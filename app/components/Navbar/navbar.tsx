@@ -42,10 +42,12 @@ export default function Navbar() {
         <Link href="/profile">Profil</Link>
         <Link href="/activity">Aktivnosti</Link>
         <Link href="/food">Unos hrane</Link>
+        <Link href="/analytics">Analitika</Link>
         {isAdmin && <Link href="/swagger">API Docs</Link>}
       </div>
 
       <button
+        type="button"
         onClick={logout}
         className="bg-red-500 hover:bg-red-600 px-3 py-1 rounded"
       >

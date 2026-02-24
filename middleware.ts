@@ -41,7 +41,8 @@ function applySecurityHeaders(req: NextRequest, res: NextResponse, isApi: boolea
   const csp = [
     "default-src 'self'",
     scriptSrc,
-    "style-src 'self' 'unsafe-inline' https://unpkg.com",
+    "style-src 'self' 'unsafe-inline' https://unpkg.com https://www.gstatic.com",
+    "style-src-elem 'self' 'unsafe-inline' https://unpkg.com https://www.gstatic.com",
     "img-src 'self' data: https:",
     "font-src 'self' data: https:",
     connectSrc,

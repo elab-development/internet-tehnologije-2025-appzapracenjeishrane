@@ -1,13 +1,33 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function Navbar() {
   const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setIsAdmin(false);
+      return;
+    }
+
+    try {
+      const [, payloadBase64] = token.split(".");
+      const payloadJson = atob(payloadBase64.replace(/-/g, "+").replace(/_/g, "/"));
+      const payload = JSON.parse(payloadJson) as { uloga?: string };
+      setIsAdmin(String(payload.uloga ?? "").toUpperCase() === "ADMIN");
+    } catch {
+      setIsAdmin(false);
+    }
+  }, []);
 
   const logout = () => {
     localStorage.removeItem("token");
+    setIsAdmin(false);
     router.push("/login");
   };
 
@@ -22,6 +42,7 @@ export default function Navbar() {
         <Link href="/profile">Profil</Link>
         <Link href="/activity">Aktivnosti</Link>
         <Link href="/food">Unos hrane</Link>
+        {isAdmin && <Link href="/swagger">API Docs</Link>}
       </div>
 
       <button

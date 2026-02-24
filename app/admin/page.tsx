@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 type PendingFood = {
@@ -121,13 +122,21 @@ export default function AdminPage() {
     >
       <nav className="w-full h-14 bg-gray-900 text-white flex items-center justify-between px-6">
         <div className="font-bold text-lg">Admin panel</div>
-        <button
-          type="button"
-          onClick={logout}
-          className="bg-red-500 hover:bg-red-600 px-3 py-1 rounded"
-        >
-          Izloguj se
-        </button>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/swagger"
+            className="bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded"
+          >
+            Swagger
+          </Link>
+          <button
+            type="button"
+            onClick={logout}
+            className="bg-red-500 hover:bg-red-600 px-3 py-1 rounded"
+          >
+            Izloguj se
+          </button>
+        </div>
       </nav>
 
       <div className="mx-auto max-w-7xl space-y-6 p-6">

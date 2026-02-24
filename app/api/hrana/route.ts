@@ -1,6 +1,6 @@
 import { db } from "@/src/db";
 import { hrana } from "@/src/db/schema";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 
@@ -27,46 +27,66 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  if (!isAuthed(req)) {
-    return NextResponse.json({ error: "Niste ulogovani" }, { status: 401 });
-  }
+  try {
+    if (!isAuthed(req)) {
+      return NextResponse.json({ error: "Niste ulogovani" }, { status: 401 });
+    }
 
-  const body = await req.json();
-  const { nazivHrane, kalorije, proteini, masti, ugljeniHidrati } = body ?? {};
+    const body = await req.json();
+    const { nazivHrane, kalorije, proteini, masti, ugljeniHidrati } = body ?? {};
 
-  if (!nazivHrane) {
+    if (!nazivHrane) {
+      return NextResponse.json(
+        { error: "Naziv hrane je obavezan" },
+        { status: 400 },
+      );
+    }
+
+    const toStr = (v: any) => {
+      const n = Number(v);
+      if (!Number.isFinite(n) || n < 0) return null;
+      return String(n);
+    };
+
+    const kcal = toStr(kalorije);
+    const p = toStr(proteini);
+    const f = toStr(masti);
+    const uh = toStr(ugljeniHidrati);
+
+    if ([kcal, p, f, uh].some((x) => x == null)) {
+      return NextResponse.json(
+        { error: "Nutritivne vrednosti moraju biti brojevi >= 0" },
+        { status: 400 },
+      );
+    }
+
+    const latest = await db
+      .select({ hranaId: hrana.hranaId })
+      .from(hrana)
+      .orderBy(desc(hrana.hranaId))
+      .limit(1);
+
+    const nextHranaId =
+      latest.length > 0 && latest[0].hranaId != null
+        ? BigInt(latest[0].hranaId as any) + 1n
+        : 1001n;
+
+    await db.insert(hrana).values({
+      hranaId: nextHranaId,
+      nazivHrane: String(nazivHrane).trim(),
+      kalorije: kcal,
+      proteini: p,
+      masti: f,
+      ugljeniHidrati: uh,
+      prihvacena: 0,
+    } as any);
+
+    return NextResponse.json({ message: "Hrana je poslata na odobrenje" });
+  } catch (err) {
+    console.error("HRANA POST ERROR:", err);
     return NextResponse.json(
-      { error: "Naziv hrane je obavezan" },
-      { status: 400 },
+      { error: "Greska pri dodavanju hrane" },
+      { status: 500 },
     );
   }
-
-  const toStr = (v: any) => {
-    const n = Number(v);
-    if (!Number.isFinite(n) || n < 0) return null;
-    return String(n);
-  };
-
-  const kcal = toStr(kalorije);
-  const p = toStr(proteini);
-  const f = toStr(masti);
-  const uh = toStr(ugljeniHidrati);
-
-  if ([kcal, p, f, uh].some((x) => x == null)) {
-    return NextResponse.json(
-      { error: "Nutritivne vrednosti moraju biti brojevi >= 0" },
-      { status: 400 },
-    );
-  }
-
-  await db.insert(hrana).values({
-    nazivHrane: String(nazivHrane).trim(),
-    kalorije: kcal,
-    proteini: p,
-    masti: f,
-    ugljeniHidrati: uh,
-    prihvacena: 0,
-  } as any);
-
-  return NextResponse.json({ message: "Hrana je poslata na odobrenje" });
 }

@@ -60,7 +60,13 @@ export default function NewFoodPage() {
         }),
       });
 
-      const data = await res.json();
+      const raw = await res.text();
+      let data: any = null;
+      try {
+        data = raw ? JSON.parse(raw) : null;
+      } catch {
+        data = null;
+      }
       if (!res.ok) {
         alert(data?.error ?? "Greška pri dodavanju hrane");
         return;

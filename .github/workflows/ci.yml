@@ -37,4 +37,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build Docker image
-        run: docker build -t my-diet-app:ci .
+        run: |
+          docker build \
+            --build-arg DATABASE_URL=mysql://root:root@localhost:3306/ishrana \
+            --build-arg JWT_SECRET=ci_dummy_secret \
+            -t my-diet-app:ci .

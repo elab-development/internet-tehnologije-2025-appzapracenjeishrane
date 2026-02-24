@@ -5,6 +5,10 @@ RUN npm ci
 
 FROM node:20-alpine AS builder
 WORKDIR /app
+ARG DATABASE_URL
+ARG JWT_SECRET
+ENV DATABASE_URL=$DATABASE_URL
+ENV JWT_SECRET=$JWT_SECRET
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build

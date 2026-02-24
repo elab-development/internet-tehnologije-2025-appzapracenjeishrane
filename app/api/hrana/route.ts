@@ -68,8 +68,8 @@ export async function POST(req: Request) {
 
     const nextHranaId =
       latest.length > 0 && latest[0].hranaId != null
-        ? BigInt(latest[0].hranaId as any) + 1n
-        : 1001n;
+        ? BigInt(latest[0].hranaId as any) + BigInt(1)
+        : BigInt(1001);
 
     await db.insert(hrana).values({
       hranaId: nextHranaId,

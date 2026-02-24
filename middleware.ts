@@ -8,7 +8,22 @@ function isSameOrigin(req: NextRequest) {
   if (!origin) return true;
 
   try {
-    return new URL(origin).origin === req.nextUrl.origin;
+    const originUrl = new URL(origin);
+    const forwardedHost = req.headers.get("x-forwarded-host");
+    const forwardedProto = req.headers.get("x-forwarded-proto");
+    const host = req.headers.get("host");
+
+    const allowedOrigins = new Set<string>([req.nextUrl.origin]);
+
+    if (forwardedHost) {
+      allowedOrigins.add(`${forwardedProto ?? "https"}://${forwardedHost}`);
+    }
+
+    if (host) {
+      allowedOrigins.add(`${forwardedProto ?? req.nextUrl.protocol.replace(":", "")}://${host}`);
+    }
+
+    return allowedOrigins.has(originUrl.origin);
   } catch {
     return false;
   }
